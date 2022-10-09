@@ -49,7 +49,7 @@ func doBiDirectionStream(c pb.GreetServiceClient) {
 				break
 			}
 
-			log.Printf("GreetClientStream: %s\n", res.Result)
+			log.Printf("doBiDirectionStream from server: %s\n", res.Result)
 		}
 
 		close(waitc)
