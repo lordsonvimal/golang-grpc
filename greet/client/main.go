@@ -22,5 +22,6 @@ func main() {
 	c := pb.NewGreetServiceClient(conn)
 	// doGreet(c)
 	// doGreetStream(c)
-	doGreetClientStream(c)
+	// doGreetClientStream(c)
+	doBiDirectionStream(c)
 }
