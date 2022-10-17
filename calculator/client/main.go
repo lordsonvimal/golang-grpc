@@ -21,4 +21,5 @@ func main() {
 
 	c := pb.NewCalculatorServiceClient(conn)
 	doSum(c)
+	doMinus(c)
 }

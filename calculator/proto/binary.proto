@@ -4,11 +4,11 @@ package calculator;
 
 option go_package = "github.com/lordsonvimal/golang-grpc/calculator/proto";
 
-message SumRequest {
+message BinaryRequest {
   int32 first_operand = 1;
   int32 second_operand = 2;
 }
 
-message SumResponse {
+message BinaryResponse {
   int32 result = 1;
 }

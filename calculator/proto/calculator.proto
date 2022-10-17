@@ -4,8 +4,9 @@ package calculator;
 
 option go_package = "github.com/lordsonvimal/golang-grpc/calculator/proto";
 
-import "sum.proto";
+import "binary.proto";
 
 service CalculatorService {
-  rpc Sum(SumRequest) returns (SumResponse);
+  rpc Sum(BinaryRequest) returns (BinaryResponse);
+  rpc Minus(stream BinaryRequest) returns (stream BinaryResponse);
 }

@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalculatorServiceClient interface {
-	Sum(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error)
+	Sum(ctx context.Context, in *BinaryRequest, opts ...grpc.CallOption) (*BinaryResponse, error)
+	Minus(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_MinusClient, error)
 }
 
 type calculatorServiceClient struct {
@@ -33,8 +34,8 @@ func NewCalculatorServiceClient(cc grpc.ClientConnInterface) CalculatorServiceCl
 	return &calculatorServiceClient{cc}
 }
 
-func (c *calculatorServiceClient) Sum(ctx context.Context, in *SumRequest, opts ...grpc.CallOption) (*SumResponse, error) {
-	out := new(SumResponse)
+func (c *calculatorServiceClient) Sum(ctx context.Context, in *BinaryRequest, opts ...grpc.CallOption) (*BinaryResponse, error) {
+	out := new(BinaryResponse)
 	err := c.cc.Invoke(ctx, "/calculator.CalculatorService/Sum", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -42,11 +43,43 @@ func (c *calculatorServiceClient) Sum(ctx context.Context, in *SumRequest, opts 
 	return out, nil
 }
 
+func (c *calculatorServiceClient) Minus(ctx context.Context, opts ...grpc.CallOption) (CalculatorService_MinusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CalculatorService_ServiceDesc.Streams[0], "/calculator.CalculatorService/Minus", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorServiceMinusClient{stream}
+	return x, nil
+}
+
+type CalculatorService_MinusClient interface {
+	Send(*BinaryRequest) error
+	Recv() (*BinaryResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorServiceMinusClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorServiceMinusClient) Send(m *BinaryRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calculatorServiceMinusClient) Recv() (*BinaryResponse, error) {
+	m := new(BinaryResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServiceServer is the server API for CalculatorService service.
 // All implementations must embed UnimplementedCalculatorServiceServer
 // for forward compatibility
 type CalculatorServiceServer interface {
-	Sum(context.Context, *SumRequest) (*SumResponse, error)
+	Sum(context.Context, *BinaryRequest) (*BinaryResponse, error)
+	Minus(CalculatorService_MinusServer) error
 	mustEmbedUnimplementedCalculatorServiceServer()
 }
 
@@ -54,8 +87,11 @@ type CalculatorServiceServer interface {
 type UnimplementedCalculatorServiceServer struct {
 }
 
-func (UnimplementedCalculatorServiceServer) Sum(context.Context, *SumRequest) (*SumResponse, error) {
+func (UnimplementedCalculatorServiceServer) Sum(context.Context, *BinaryRequest) (*BinaryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sum not implemented")
+}
+func (UnimplementedCalculatorServiceServer) Minus(CalculatorService_MinusServer) error {
+	return status.Errorf(codes.Unimplemented, "method Minus not implemented")
 }
 func (UnimplementedCalculatorServiceServer) mustEmbedUnimplementedCalculatorServiceServer() {}
 
@@ -71,7 +107,7 @@ func RegisterCalculatorServiceServer(s grpc.ServiceRegistrar, srv CalculatorServ
 }
 
 func _CalculatorService_Sum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SumRequest)
+	in := new(BinaryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,9 +119,35 @@ func _CalculatorService_Sum_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/calculator.CalculatorService/Sum",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CalculatorServiceServer).Sum(ctx, req.(*SumRequest))
+		return srv.(CalculatorServiceServer).Sum(ctx, req.(*BinaryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _CalculatorService_Minus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServiceServer).Minus(&calculatorServiceMinusServer{stream})
+}
+
+type CalculatorService_MinusServer interface {
+	Send(*BinaryResponse) error
+	Recv() (*BinaryRequest, error)
+	grpc.ServerStream
+}
+
+type calculatorServiceMinusServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorServiceMinusServer) Send(m *BinaryResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calculatorServiceMinusServer) Recv() (*BinaryRequest, error) {
+	m := new(BinaryRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // CalculatorService_ServiceDesc is the grpc.ServiceDesc for CalculatorService service.
@@ -100,6 +162,13 @@ var CalculatorService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CalculatorService_Sum_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Minus",
+			Handler:       _CalculatorService_Minus_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "calculator.proto",
 }
